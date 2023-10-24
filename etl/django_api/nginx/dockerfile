@@ -1,0 +1,7 @@
+FROM nginx:latest
+RUN rm /etc/nginx/conf.d/default.conf
+RUN rm /etc/nginx/nginx.conf
+COPY web.conf /etc/nginx/conf.d
+COPY elastic.conf /etc/nginx/conf.d
+COPY redis.conf /etc/nginx/conf.d
+COPY nginx.conf /etc/nginx/

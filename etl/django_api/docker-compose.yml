@@ -1,0 +1,98 @@
+version: '3'
+services:
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: dockerfile
+    ports:
+      - 80:80
+      - 9200:9200
+      - 5432:5432
+    depends_on:
+      - web
+    volumes:
+      - ./src:/parcel
+
+  db:
+    env_file:
+      - .env
+    build:
+      context: ./postgres
+      dockerfile: dockerfile
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_SCHEMA: ${DB_SCHEMA}
+
+  elastic_search:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.10.2
+    environment:
+      - node.name=elasticsearch
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - xpack.security.enabled=false
+      - ELASTIC_PASSWORD=9444
+
+  web:
+    build: .
+    image: movies_admin:latest
+    command: gunicorn config.wsgi:application -b 0.0.0.0:8000 --reload 
+    environment:
+      PYTHONPATH: /parcel
+      ## type 0 if you run containers first time
+      ## else 1
+      MIGRATIONS_APPLIED: 1
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_SCHEMA: ${DB_SCHEMA}
+      DB_PORT: ${DB_PORT}
+      DB_HOST: ${DB_HOST}
+
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS}
+      DEBUG: ${DEBUG}
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY}
+
+    depends_on:
+      - elastic_search
+      - db
+      - redis
+
+    volumes:
+      - ./src:/parcel
+
+  etl:
+    image: movies_admin:latest
+    command: python3 ETL/main.py
+    environment:
+      PYTHONPATH: /ETL
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: ${DB_HOST}
+      DB_SCHEMA: ${DB_SCHEMA}
+      DB_PORT: ${DB_PORT}
+      REDIS_HOST: ${REDIS_HOST}
+      NGINX_HOST: ${NGINX_HOST}
+
+    depends_on:
+      - elastic_search
+      - db
+      - redis
+
+    volumes:
+      - ./src:/ETL
+
+  swagger:
+    build:
+      context: ./swagger
+      dockerfile: dockerfile
+    ports:
+      - 8080:8080
+
+  redis:
+    image: redis:rc-alpine3.12
+    restart: on-failure
+    ports:
+      - 16379:6379

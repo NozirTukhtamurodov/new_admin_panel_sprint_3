@@ -1,0 +1,17 @@
+# Use the official PostgreSQL image as the base image
+FROM postgres:latest
+
+# Copy the entrypoint.sh script into the container
+COPY entrypoint.sh /docker-entrypoint-initdb.d/entrypoint.sh
+
+# Set the execute permission for the entrypoint.sh script
+RUN chmod -R 777 /docker-entrypoint-initdb.d
+
+# Set environment variables and other configurations as needed
+ENV POSTGRES_DB ${DB_NAME}
+ENV POSTGRES_USER ${DB_USER}
+ENV POSTGRES_PASSWORD ${DB_PASSWORD}
+ENV POSTGRES_SCHEMA ${DB_SCHEMA}
+
+# Expose the PostgreSQL port
+EXPOSE 5432

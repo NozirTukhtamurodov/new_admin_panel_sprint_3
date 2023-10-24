@@ -1,0 +1,16 @@
+FROM python:3.10
+ENV PYTHONUNBUFFERED 1
+RUN mkdir /parcel
+
+RUN apt-get update && apt-get install -y netcat-traditional
+WORKDIR /parcel
+COPY /requirements.txt /parcel/
+ENV DJANGO_SETTINGS_MODULE 'config.settings'
+
+RUN pip install -U pip &&\
+    pip install -r requirements.txt
+
+COPY ./entrypoint.sh /
+RUN chmod 777 /entrypoint.sh
+COPY . /parcel/
+ENTRYPOINT ["/entrypoint.sh"]
