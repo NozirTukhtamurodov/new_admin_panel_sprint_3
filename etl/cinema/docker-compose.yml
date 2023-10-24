@@ -32,7 +32,7 @@ services:
       - discovery.type=single-node
       - ES_JAVA_OPTS=-Xms512m -Xmx512m
       - xpack.security.enabled=false
-      - ELASTIC_PASSWORD=9444
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
 
   web:
     build: .
