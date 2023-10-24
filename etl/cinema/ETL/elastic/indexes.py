@@ -16,7 +16,6 @@ class Index:
         client.indices.create(index=index, body=body, ignore=400)
         for document in data:
             datum = cls.remove_not_mapped_fields(data=dict(document))
-            print(datum)
             client.index(index=index, body=datum, id=datum['id'])
         client.indices.refresh(index=index)
 
